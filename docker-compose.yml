@@ -1,0 +1,142 @@
+version: '3.7'
+services:
+  postgres:
+    container_name: postgres
+    image: postgres
+    environment:
+      POSTGRES_USER: kaishalam
+      POSTGRES_PASSWORD: nk1511
+      PGDATA: /data/postgres
+    volumes:
+      - postgres:/data/postgres
+    ports:
+      - "5432:5432"
+    networks:
+      - postgres
+    restart: unless-stopped
+
+  pgadmin:
+    container_name: pgadmin
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-pgadmin@nuwaish.org}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-nk1511}
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    volumes:
+      - pgadmin:/var/lib/pgadmin
+    ports:
+      - "5050:80"
+    networks:
+      - postgres
+    restart: unless-stopped
+
+  config-server-service:
+    image: kaishalam/config-server-service:latest
+    container_name: config-server-service
+    ports:
+      - "8080:8080"
+    depends_on:
+      - service-registry
+    networks:
+      - microservice-network
+      - postgres
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+
+  service-registry:
+    image: kaishalam/service-registry:latest
+    container_name: service-registry
+    ports:
+      - "8761:8761"
+    depends_on:
+      - rabbitmq
+      - zipkin
+      - postgres
+      - pgadmin
+    networks:
+      - microservice-network
+      - postgres
+
+  company-service:
+    image: kaishalam/company-service:latest
+    container_name: company-service
+    ports:
+      - "8081:8081"
+    depends_on:
+      - service-registry
+      - config-server-service
+    networks:
+      - microservice-network
+      - postgres
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+
+  job-service:
+    image: kaishalam/job-service:latest
+    container_name: job-service
+    ports:
+      - "8082:8082"
+    depends_on:
+      - service-registry
+      - config-server-service
+    networks:
+      - microservice-network
+      - postgres
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://service-registry:8761/eureka
+
+  review-service:
+    image: kaishalam/review-service:latest
+    container_name: review-service
+    ports:
+      - "8083:8083"
+    depends_on:
+      - service-registry
+      - config-server-service
+    networks:
+      - microservice-network
+      - postgres
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - microservice-network
+      - postgres
+
+  zipkin:
+    image: openzipkin/zipkin
+    container_name: zipkin
+    ports:
+      - "9411:9411"
+    networks:
+      - microservice-network
+      - postgres
+
+  gateway-service:
+    image: kaishalam/gateway-service:latest
+    ports:
+      - "8084:8084"
+    depends_on:
+      - service-registry
+    networks:
+      - microservice-network
+      - postgres
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+
+networks:
+  microservice-network:
+    driver: bridge
+  postgres:
+    driver: bridge
+
+volumes:
+  postgres:
+  pgadmin:

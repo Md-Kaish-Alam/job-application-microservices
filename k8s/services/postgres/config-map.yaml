@@ -1,0 +1,9 @@
+# config-map
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-config
+data:
+  POSTGRES_DB: kaishalam
+  POSTGRES_USER: kaishalam
+  POSTGRES_PASSWORD: nk1511
