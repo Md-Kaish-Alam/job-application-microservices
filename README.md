@@ -122,7 +122,7 @@ Each microservice is independent and communicates via REST APIs.
 1. Clone the repository:
 
    ```bash
-   git clone [https://github.com/yourusername/job-application-backend.git](https://github.com/Md-Kaish-Alam/job-application-microservices.git
+   git clone https://github.com/Md-Kaish-Alam/job-application-microservices.git
    ```
    
 2. Build the project using Maven:
